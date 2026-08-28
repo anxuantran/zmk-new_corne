@@ -9,3 +9,18 @@ include:
     artifact-name: eyelash_corne_studio_left
   - board: nice_nano_v2
     shield: settings_reset
+
+  # --- debug builds (this branch only) ---
+
+  # A: plain left, no Studio. Control for the RAM-pressure hypothesis.
+  - board: nice_nano_v2
+    shield: eyelash_corne_left nice_view
+    artifact-name: debug_a_plain_left
+
+  # B: left with the console on USB CDC ACM, so we can read why the
+  #    display does or does not initialise at boot.
+  - board: nice_nano_v2
+    shield: eyelash_corne_left nice_view
+    snippet: zmk-usb-logging
+    cmake-args: -DCONFIG_DISPLAY_LOG_LEVEL_DBG=y -DCONFIG_ZMK_LOG_LEVEL_DBG=y
+    artifact-name: debug_b_logging_left
