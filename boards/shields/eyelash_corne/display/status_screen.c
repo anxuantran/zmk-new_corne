@@ -59,7 +59,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define BATTERY_FILL_X 5
 #define BATTERY_FILL_W 22
 
+/* The glyph is centred in an 18px band so that resizing the art does not
+ * shift the spacing of everything around it. */
+#define BLUETOOTH_BAND_H 18
 #define BLUETOOTH_X ((ECORNE_STRIP_W - BT_ON_W) / 2)
+#define BLUETOOTH_GLYPH_Y (BLUETOOTH_Y + (BLUETOOTH_BAND_H - BT_ON_H) / 2)
 
 /* ------------------------------------------------------------------- state */
 
@@ -87,7 +91,7 @@ static void draw_battery(void) {
 }
 
 static void draw_bluetooth(void) {
-    ecorne_img(state.connected ? &bt_on : &bt_off, BLUETOOTH_X, BLUETOOTH_Y);
+    ecorne_img(state.connected ? &bt_on : &bt_off, BLUETOOTH_X, BLUETOOTH_GLYPH_Y);
 }
 
 #if IS_CENTRAL

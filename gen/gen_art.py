@@ -70,23 +70,34 @@ def bresenham(g, x0, y0, x1, y1):
         if e2 >= dy: err += dy; x0 += sx
         if e2 <= dx: err += dx; y0 += sy
 
-def bt_glyph(slashed):
-    """Bluetooth rune, 14w x 18h, authored upright (the strip's own axis).
+# Bluetooth glyph size. The strip is only 32 px wide, so this is deliberately
+# small; the geometry below is proportional, so these are the only two numbers
+# to change if it wants resizing again.
+BT_W, BT_H = 9, 12
 
-    Only the top half is drawn; the bottom is mirrored, which is what keeps
-    the two lobes identical at this size."""
-    W, H = 14, 18
+def bt_glyph(slashed):
+    """Bluetooth rune, authored upright (the strip's own axis).
+
+    Only the top half is drawn; the bottom is mirrored, which is what keeps the
+    two lobes identical at these sizes."""
+    W, H = BT_W, BT_H
     half = H // 2
     g = [[0] * W for _ in range(H)]
-    cx, right, left = 6, 11, 2
-    bresenham(g, cx, 0, cx, half - 1)        # spine, top half
-    bresenham(g, cx, 0, right, 4)            # lobe out
-    bresenham(g, right, 4, cx, half - 1)     # lobe back to waist
-    bresenham(g, left, 4, cx - 1, half - 1)  # cross stroke into the waist
-    for y in range(half):                    # mirror -> guaranteed symmetry
+    cx, right, left = (W - 1) // 2, W - 2, 1
+    lobe_y = max(1, round(H * 0.22))
+
+    bresenham(g, cx, 0, cx, half - 1)          # spine, top half
+    bresenham(g, cx, 0, right, lobe_y)         # lobe out
+    bresenham(g, right, lobe_y, cx, half - 1)  # lobe back to the waist
+    bresenham(g, left, lobe_y, cx - 1, half - 1)  # cross stroke into the waist
+
+    for y in range(half):                      # mirror -> guaranteed symmetry
         g[H - 1 - y] = list(g[y])
+
     if slashed:
-        for y in range(H):                   # 1px strike with a cleared border
+        # One pixel of clearance either side. More than that eats the rune at
+        # this size; less and the strike merges into the strokes.
+        for y in range(H):
             x = int(round((W - 1) * y / (H - 1)))
             for dx in (-1, 0, 1):
                 if 0 <= x + dx < W: g[y][x + dx] = 0

@@ -11,10 +11,10 @@
 #define BONGO_TAP0_H 56
 #define BONGO_TAP1_W 28
 #define BONGO_TAP1_H 56
-#define BT_ON_W 14
-#define BT_ON_H 18
-#define BT_OFF_W 14
-#define BT_OFF_H 18
+#define BT_ON_W 9
+#define BT_ON_H 12
+#define BT_OFF_W 9
+#define BT_OFF_H 12
 
 LV_IMG_DECLARE(bongo_ready);
 LV_IMG_DECLARE(bongo_waiting);
