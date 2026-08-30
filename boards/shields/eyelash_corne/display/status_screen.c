@@ -125,9 +125,9 @@ static void draw_bluetooth(void) {
 
 #if IS_CENTRAL
 static void draw_layer(void) {
-    /* Inverted row: lit block, unlit text. */
-    ecorne_rect(1, LAYER_Y, 30, 17, true);
-    ecorne_text(state.layer, LAYER_Y + 4, ECORNE_BG);
+    /* Plain lit text, matching every other row. The y offset is what the
+     * inverted block used, so the row has not moved. */
+    ecorne_text(state.layer, LAYER_Y + 4, ECORNE_FG);
 }
 #else
 /* Thresholds and frame duration match dancarroll/qmk-bongo so the cat behaves
