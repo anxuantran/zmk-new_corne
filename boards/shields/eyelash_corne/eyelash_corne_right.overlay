@@ -11,3 +11,13 @@
 &default_transform {
     col-offset = <7>;
 };
+/*
+ * The halves' PCBs are mirrored, so the two panels sit 180 degrees apart.
+ * Cancel that here, on one half only, so a single rotation in code serves both
+ * (display/canvas.h). If both halves come out upside down, move this block to
+ * eyelash_corne_left.overlay -- it is the same one-line change either way.
+ */
+&oled {
+    segment-remap;
+    com-invdir;
+};

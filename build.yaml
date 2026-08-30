@@ -24,3 +24,11 @@ include:
     snippet: zmk-usb-logging
     cmake-args: -DCONFIG_DISPLAY_LOG_LEVEL_DBG=y -DCONFIG_ZMK_LOG_LEVEL_DBG=y
     artifact-name: eyelash_corne_logging_left
+
+  # Console over USB CDC ACM for the peripheral. The right half is where the
+  # cat and the relayed WPM live, so it needs its own console build.
+  - board: nice_nano_v2
+    shield: eyelash_corne_right
+    snippet: zmk-usb-logging
+    cmake-args: -DCONFIG_DISPLAY_LOG_LEVEL_DBG=y -DCONFIG_ZMK_LOG_LEVEL_DBG=y
+    artifact-name: eyelash_corne_logging_right

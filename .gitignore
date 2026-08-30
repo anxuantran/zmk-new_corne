@@ -3,3 +3,4 @@ zmk/
 modules/
 tools/
 .west/
+gen/bongo_cat.c.cache

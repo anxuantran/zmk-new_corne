@@ -44,6 +44,34 @@ choice ZMK_DISPLAY_WORK_QUEUE
     default ZMK_DISPLAY_WORK_QUEUE_DEDICATED
 endchoice
 
+# The panel is mounted with its long axis running front-to-back, so ZMK's
+# landscape built-in status screen reads sideways. display/ replaces it with a
+# vertical one; see display/canvas.h for how rotation is handled.
+choice ZMK_DISPLAY_STATUS_SCREEN
+    default ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+endchoice
+
+# The status screen draws into an off-screen canvas and blits 1bpp images.
+# Neither is on by default in Zephyr's LVGL configuration.
+config LV_USE_CANVAS
+    default y
+
+config LV_USE_IMG
+    default y
+
+# 8x8 bitmap font. Montserrat is antialiased and dithers badly at 1bpp.
+config LV_FONT_UNSCII_8
+    default y
+
+config LV_Z_MEM_POOL_SIZE
+    default 4096
+
+# Drives the bongo cat on the peripheral. The peripheral never sees keycodes,
+# so its own figure stays 0; the useful value is relayed from the central by
+# display/wpm_relay.c, which needs the event type compiled on both halves.
+config ZMK_WPM
+    default y
+
 endif # ZMK_DISPLAY
 
 if SSD1306
