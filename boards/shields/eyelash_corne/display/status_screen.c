@@ -65,14 +65,24 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 /* The glyph is centred in an 18px band so that resizing the art does not
  * shift the spacing of everything around it. */
 #define BLUETOOTH_BAND_H 18
+#define BLUETOOTH_GLYPH_Y (BLUETOOTH_Y + (BLUETOOTH_BAND_H - BT_ON_H) / 2)
+
+#if IS_CENTRAL
+/* Glyph and profile digit side by side, the pair centred: 9px glyph, 3px gap,
+ * one 8px digit. The peripheral has no profile, so its glyph centres alone. */
+#define PROFILE_GAP 3
+#define PROFILE_DIGIT_W 8
+#define BLUETOOTH_X ((ECORNE_STRIP_W - (BT_ON_W + PROFILE_GAP + PROFILE_DIGIT_W)) / 2)
+#define PROFILE_X (BLUETOOTH_X + BT_ON_W + PROFILE_GAP)
+#else
 #define BLUETOOTH_X ((ECORNE_STRIP_W - BT_ON_W) / 2)
+#endif
 
 /* The strip is 32px and unscii_8 is a fixed 8px per character, so the layer
  * row holds four characters. Names come from each layer's display-name in the
  * keymap and are truncated to fit, so relabelling is a keymap edit, not a
  * firmware change. */
 #define LAYER_LABEL_MAX 4
-#define BLUETOOTH_GLYPH_Y (BLUETOOTH_Y + (BLUETOOTH_BAND_H - BT_ON_H) / 2)
 
 /* ------------------------------------------------------------------- state */
 
