@@ -66,11 +66,15 @@ config LV_FONT_UNSCII_8
 config LV_Z_MEM_POOL_SIZE
     default 4096
 
-# Drives the bongo cat on the peripheral. The peripheral never sees keycodes,
-# so its own figure stays 0; the useful value is relayed from the central by
-# display/wpm_relay.c, which needs the event type compiled on both halves.
+# Drives the bongo cat. Central only: ZMK's wpm.c counts keycode events, which
+# do not exist on a peripheral, so enabling this on the right half fails to
+# link. The right half receives the number instead -- see display/wpm_relay.c.
+if SHIELD_EYELASH_CORNE_LEFT
+
 config ZMK_WPM
     default y
+
+endif # SHIELD_EYELASH_CORNE_LEFT
 
 endif # ZMK_DISPLAY
 

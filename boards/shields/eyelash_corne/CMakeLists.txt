@@ -13,8 +13,9 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM)
   zephyr_library_sources(display/status_screen.c)
 
   # Carries typing activity from the central to the peripheral so the cat on
-  # the right half reacts to both hands, not just the right one.
-  if(CONFIG_ZMK_SPLIT_RELAY_EVENT AND CONFIG_ZMK_WPM)
+  # the right half reacts to both hands, not just the right one. Needed on both
+  # sides: the central sends, the peripheral decodes.
+  if(CONFIG_ZMK_SPLIT_RELAY_EVENT)
     zephyr_library_sources(display/wpm_relay.c)
   endif()
 endif()

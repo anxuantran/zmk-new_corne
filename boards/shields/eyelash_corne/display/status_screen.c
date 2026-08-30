@@ -31,9 +31,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/ble_active_profile_changed.h>
 #else
 #include <zmk/events/split_peripheral_status_changed.h>
-#include <zmk/events/wpm_state_changed.h>
 #include <zmk/split/bluetooth/peripheral.h>
-#include <zmk/wpm.h>
+
+#include "wpm_relay.h"
 #endif
 
 /* ------------------------------------------------------------------ layout */
@@ -68,8 +68,6 @@ static struct {
     bool connected;
 #if IS_CENTRAL
     uint8_t profile;
-#else
-    uint8_t wpm;
 #endif
 } state;
 
@@ -112,10 +110,14 @@ static const lv_img_dsc_t *bongo_frame;
 static uint8_t bongo_phase;
 
 static const lv_img_dsc_t *bongo_pick(void) {
-    if (state.wpm < BONGO_READY_WPM) {
+    /* Pushed over the split link by the central; see wpm_relay.c. Polling it
+     * here means the cat needs no event subscription of its own. */
+    uint8_t wpm = ecorne_relayed_wpm();
+
+    if (wpm < BONGO_READY_WPM) {
         return &bongo_ready;
     }
-    if (state.wpm >= BONGO_TAP_WPM) {
+    if (wpm >= BONGO_TAP_WPM) {
         return bongo_phase ? &bongo_tap1 : &bongo_tap0;
     }
     return &bongo_waiting;
@@ -192,23 +194,6 @@ ZMK_SUBSCRIPTION(ecorne_output, zmk_split_peripheral_status_changed);
 #endif
 
 #if !IS_CENTRAL
-struct wpm_state {
-    uint8_t wpm;
-};
-
-static struct wpm_state wpm_get_state(const zmk_event_t *eh) {
-    const struct zmk_wpm_state_changed *ev = eh ? as_zmk_wpm_state_changed(eh) : NULL;
-    int wpm = ev ? ev->state : zmk_wpm_get_state();
-    return (struct wpm_state){.wpm = wpm < 0 ? 0 : (uint8_t)wpm};
-}
-
-/* The peripheral never sees keycodes, so this only ever fires from a
- * zmk_wpm_state_changed relayed by the central. See wpm_relay.c. */
-static void wpm_update_cb(struct wpm_state s) { state.wpm = s.wpm; }
-
-ZMK_DISPLAY_WIDGET_LISTENER(ecorne_wpm, struct wpm_state, wpm_update_cb, wpm_get_state)
-ZMK_SUBSCRIPTION(ecorne_wpm, zmk_wpm_state_changed);
-
 static void bongo_tick(lv_timer_t *timer) {
     bongo_phase ^= 1;
 
@@ -238,7 +223,6 @@ lv_obj_t *zmk_display_status_screen(void) {
     ecorne_battery_init();
     ecorne_output_init();
 #if !IS_CENTRAL
-    ecorne_wpm_init();
     bongo_frame = bongo_pick();
     lv_timer_create(bongo_tick, BONGO_FRAME_MS, NULL);
 #endif
