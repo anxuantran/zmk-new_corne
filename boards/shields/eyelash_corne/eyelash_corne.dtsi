@@ -145,6 +145,13 @@
         multiplex-ratio = <31>;
         com-sequential;
         prechargep = <0x22>;
+
+        /* Confirmed on hardware: both panels are mounted the same way round,
+         * so both need the same 180-degree flip -- they are NOT mirrored
+         * relative to each other. Applying this to one half only leaves that
+         * half upright and the other inverted. */
+        segment-remap;
+        com-invdir;
     };
 };
 

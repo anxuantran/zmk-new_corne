@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <zephyr/kernel.h>
 
 #include <zephyr/logging/log.h>
@@ -29,6 +30,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #if IS_CENTRAL
 #include <zmk/ble.h>
 #include <zmk/events/ble_active_profile_changed.h>
+#include <zmk/events/layer_state_changed.h>
+#include <zmk/keymap.h>
 #else
 #include <zmk/events/split_peripheral_status_changed.h>
 #include <zmk/split/bluetooth/peripheral.h>
@@ -42,7 +45,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define BATTERY_Y 14
 #define BATTERY_TEXT_Y 30
 #define BLUETOOTH_Y 64
-#define PROFILE_Y 100
+#define LAYER_Y 100
 #else
 /* Shifted up so nothing crosses y 64. Everything from y 68 down belongs to
  * the cat, and the status stack must not encroach on it. */
@@ -63,6 +66,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
  * shift the spacing of everything around it. */
 #define BLUETOOTH_BAND_H 18
 #define BLUETOOTH_X ((ECORNE_STRIP_W - BT_ON_W) / 2)
+
+/* The strip is 32px and unscii_8 is a fixed 8px per character, so the layer
+ * row holds four characters. Names come from each layer's display-name in the
+ * keymap and are truncated to fit, so relabelling is a keymap edit, not a
+ * firmware change. */
+#define LAYER_LABEL_MAX 4
 #define BLUETOOTH_GLYPH_Y (BLUETOOTH_Y + (BLUETOOTH_BAND_H - BT_ON_H) / 2)
 
 /* ------------------------------------------------------------------- state */
@@ -71,6 +80,8 @@ static struct {
     uint8_t battery;
     bool connected;
 #if IS_CENTRAL
+    /* Layer label, from the keymap's display-name. See LAYER_LABEL_MAX. */
+    char layer[LAYER_LABEL_MAX + 1];
     uint8_t profile;
 #endif
 } state;
@@ -92,16 +103,21 @@ static void draw_battery(void) {
 
 static void draw_bluetooth(void) {
     ecorne_img(state.connected ? &bt_on : &bt_off, BLUETOOTH_X, BLUETOOTH_GLYPH_Y);
+
+#if IS_CENTRAL
+    /* 1-indexed, to match how the profiles are spoken about in ZMK's docs. */
+    char buf[4];
+    snprintf(buf, sizeof(buf), "%u", state.profile + 1);
+    ecorne_text_in(buf, PROFILE_X, BLUETOOTH_GLYPH_Y + (BT_ON_H - 8) / 2, PROFILE_DIGIT_W,
+                   ECORNE_FG);
+#endif
 }
 
 #if IS_CENTRAL
-static void draw_profile(void) {
+static void draw_layer(void) {
     /* Inverted row: lit block, unlit text. */
-    ecorne_rect(1, PROFILE_Y, 30, 17, true);
-
-    char buf[8];
-    snprintf(buf, sizeof(buf), "BT%u", state.profile + 1);
-    ecorne_text(buf, PROFILE_Y + 4, ECORNE_BG);
+    ecorne_rect(1, LAYER_Y, 30, 17, true);
+    ecorne_text(state.layer, LAYER_Y + 4, ECORNE_BG);
 }
 #else
 /* Thresholds and frame duration match dancarroll/qmk-bongo so the cat behaves
@@ -138,7 +154,7 @@ static void redraw(void) {
     draw_battery();
     draw_bluetooth();
 #if IS_CENTRAL
-    draw_profile();
+    draw_layer();
 #else
     draw_bongo();
 #endif
@@ -197,6 +213,38 @@ ZMK_SUBSCRIPTION(ecorne_output, zmk_ble_active_profile_changed);
 ZMK_SUBSCRIPTION(ecorne_output, zmk_split_peripheral_status_changed);
 #endif
 
+#if IS_CENTRAL
+struct layer_state {
+    char name[LAYER_LABEL_MAX + 1];
+};
+
+static struct layer_state layer_get_state(const zmk_event_t *eh) {
+    struct layer_state s = {0};
+
+    zmk_keymap_layer_id_t id = zmk_keymap_layer_index_to_id(zmk_keymap_highest_layer_active());
+    const char *name = (id == ZMK_KEYMAP_LAYER_ID_INVAL) ? NULL : zmk_keymap_layer_name(id);
+
+    if (name != NULL && name[0] != '\0') {
+        for (int i = 0; i < LAYER_LABEL_MAX && name[i] != '\0'; i++) {
+            s.name[i] = (name[i] >= 'a' && name[i] <= 'z') ? name[i] - ('a' - 'A') : name[i];
+        }
+    } else {
+        /* Unnamed layer: fall back to its index so the row is never blank. */
+        snprintf(s.name, sizeof(s.name), "L%u", zmk_keymap_highest_layer_active());
+    }
+
+    return s;
+}
+
+static void layer_update_cb(struct layer_state s) {
+    memcpy(state.layer, s.name, sizeof(state.layer));
+    redraw();
+}
+
+ZMK_DISPLAY_WIDGET_LISTENER(ecorne_layer, struct layer_state, layer_update_cb, layer_get_state)
+ZMK_SUBSCRIPTION(ecorne_layer, zmk_layer_state_changed);
+#endif
+
 #if !IS_CENTRAL
 static void bongo_tick(lv_timer_t *timer) {
     bongo_phase ^= 1;
@@ -226,6 +274,9 @@ lv_obj_t *zmk_display_status_screen(void) {
 
     ecorne_battery_init();
     ecorne_output_init();
+#if IS_CENTRAL
+    ecorne_layer_init();
+#endif
 #if !IS_CENTRAL
     bongo_frame = bongo_pick();
     lv_timer_create(bongo_tick, BONGO_FRAME_MS, NULL);

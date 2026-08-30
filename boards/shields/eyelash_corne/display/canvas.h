@@ -25,11 +25,10 @@
 #define ECORNE_STRIP_H 128
 
 /*
- * Direction of that single rotation. The two halves are 180 degrees apart in
- * hardware (mirrored PCBs); that is cancelled in the right half's overlay with
- * segment-remap/com-invdir, so one direction serves both. If both halves come
- * back upside down, move the overlay block to the other half. If both come back
- * rotated the wrong way, flip this.
+ * Direction of that single rotation. Both panels are mounted identically and
+ * both carry segment-remap/com-invdir in eyelash_corne.dtsi, so one direction
+ * serves both halves. If both come back rotated the wrong way, flip this; if
+ * both come back upside down, drop the two devicetree properties instead.
  */
 #define ECORNE_ROTATE_CW 1
 
@@ -52,3 +51,5 @@ void ecorne_clear(void);
 void ecorne_rect(lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h, bool filled);
 void ecorne_img(const lv_img_dsc_t *src, lv_coord_t x, lv_coord_t y);
 void ecorne_text(const char *txt, lv_coord_t y, lv_color_t color);
+/* Centred within [x, x+w) rather than across the whole strip. */
+void ecorne_text_in(const char *txt, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_color_t color);

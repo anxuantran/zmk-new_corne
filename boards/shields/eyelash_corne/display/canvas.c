@@ -81,12 +81,16 @@ void ecorne_img(const lv_img_dsc_t *src, lv_coord_t x, lv_coord_t y) {
     lv_canvas_draw_img(strip_canvas, x, y, src, &dsc);
 }
 
-void ecorne_text(const char *txt, lv_coord_t y, lv_color_t color) {
+void ecorne_text_in(const char *txt, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_color_t color) {
     lv_draw_label_dsc_t dsc;
     lv_draw_label_dsc_init(&dsc);
     dsc.color = color;
     dsc.font = &lv_font_unscii_8; /* 8x8 bitmap: no antialiasing to dither at 1bpp */
     dsc.align = LV_TEXT_ALIGN_CENTER;
 
-    lv_canvas_draw_text(strip_canvas, 0, y, ECORNE_STRIP_W, &dsc, txt);
+    lv_canvas_draw_text(strip_canvas, x, y, w, &dsc, txt);
+}
+
+void ecorne_text(const char *txt, lv_coord_t y, lv_color_t color) {
+    ecorne_text_in(txt, 0, y, ECORNE_STRIP_W, color);
 }
